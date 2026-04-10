@@ -1,118 +1,128 @@
-# Daily Brief 📰
+# In the Loop
 
-> A bilingual learning companion for filling everyday knowledge gaps — built for people who moved to a new culture and want to catch up, one small piece at a time.
+A daily briefing app for international students in the U.S. — helps you 
+keep up with the news and understand the cultural references people 
+around you casually drop into conversation.
 
-**🌐 Live Demo:** [daily-brief-lemon.vercel.app](https://daily-brief-lemon.vercel.app)
-
----
-
-## 💡 Why I'm Building This
-
-After moving to the U.S., I realized I had real gaps in everyday knowledge — not just news, but the kind of general literacy that makes you part of conversations: **U.S. politics, geography, sports culture (NFL, NBA, NCAA, baseball), world events, history, food culture.** People around me would casually reference things I'd never heard of, and I'd nod along.
-
-The problem wasn't motivation — I genuinely wanted to learn. The problem was that existing tools didn't fit how learning actually happens in real life:
-
-- **NYT-style daily briefings** are long and dense. As an English learner, I'd lose steam after two paragraphs.
-- **Wikipedia rabbit holes** are deep but unstructured — no progress tracking, no sense of "I'm getting somewhere."
-- **Chinese news apps** are easy to read but don't help me improve English or build context for the place I now live in.
-
-**Daily Brief is designed for the small pockets of time in a day** — waiting for coffee, on the bus, before bed. The goal isn't to make you study; it's to make catching up on the world feel light, rewarding, and sustainable.
+**Live Demo:** *(coming soon)*
 
 ---
 
-## 🧩 Two Modules, One Goal
+## Why I'm Building This
 
-The app is built around two complementary ways to fill knowledge gaps:
+I came to the U.S. for college and ran into a specific kind of gap that 
+existing apps don't really address.
 
-### 📰 News Module — Stay Current Without Drowning
+It's not a language problem — my English is fine. It's not a news 
+problem — I can read the NYT if I sit down and force myself. The gap is 
+the everyday cultural context that everyone around me shares and I 
+don't. Someone mentions "bracket busted" at lunch and everyone laughs. 
+A classmate references a TikTok I've never seen. My roommate asks if I 
+watched "the game" and I don't even know which sport.
 
-Each news item is presented in three layers, so you choose your own depth:
+These moments are small, but they pile up. After a while you start 
+nodding along instead of joining in.
 
-1. **One English headline** — short, scannable. You instantly know if you care.
-2. **Tap to expand → Chinese explanation** — understand the background, key terms, and why it matters, in your native language first.
-3. **Read the original article** — once you've got the context, the English original feels natural instead of intimidating.
+The existing tools don't quite fit:
 
-This three-layer structure removes the "wall of text" problem while keeping English exposure intact. News will be sourced from authoritative outlets (BBC, Reuters, AP) via a real-time news API, with AI-generated Chinese summaries.
+- NYT and BBC cover world news but not the cultural background that 
+  makes a joke land or a reference click.
+- TikTok and Instagram show you what's trending, but you're just seeing 
+  stuff go by — you don't get the context for why it matters or how 
+  people actually talk about it.
+- Language apps teach vocabulary, not the kind of references and 
+  phrases that come up in real conversations.
 
-### 📚 Knowledge Module — Build Lasting General Literacy
-
-This is the heart of the product. Unlike news (which expires), knowledge **accumulates**. The module is built around three principles:
-
-**1. Hierarchical categories you can choose from.**
-Pick the areas you care about, and drill down as deep as you want:
-
-**2. Mastery percentage for every category.**
-Each topic has a progress bar, like Duolingo. As you learn and answer questions correctly, the percentage grows. The goal: turn vague "I should learn more about X" into a concrete, visible "I've mastered 60% of Italian food culture."
-
-**3. Bite-sized, AI-generated content.**
-Knowledge cards and quizzes are generated dynamically, so the content stays fresh and the system can adapt to what you already know. No static question bank to maintain.
-
-The point isn't to make you an expert. It's to give you **enough to participate** — enough to follow a conversation, get a joke, ask a smart follow-up question.
-
----
-
-## 🎯 Features
-
-### ✅ Currently Live (v0.1)
-- Three-layer news cards (English headline → Chinese explanation → original)
-- Knowledge cards across multiple categories
-- Quick quiz with instant feedback and explanation
-- Daily streak tracker
-- Mobile-friendly responsive design
-
-### 🚧 In Development
-- [ ] Real-time news via news API (NewsData.io)
-- [ ] AI-generated Chinese explanations (Claude / Gemini API)
-- [ ] Hierarchical knowledge category selection
-- [ ] Mastery percentage system per category
-- [ ] User accounts & cross-device sync
-
-### 🔮 Future
-- [ ] Personalized daily push notifications
-- [ ] iOS app via React Native
-- [ ] TestFlight beta with friends
-- [ ] App Store launch
-- [ ] Subscription model to support development
+In the Loop is my attempt to build the thing I wish existed when I got 
+here.
 
 ---
 
-## 🛠 Tech Stack
+## What It Does
 
-- **Frontend:** HTML, CSS, Vanilla JavaScript (frameworks coming as the project grows)
+The app has two sections.
+
+### News Brief
+
+A short daily feed of important stories from around the world, pulled 
+from neutral wire services (AP, Reuters). Each item has an English 
+headline, a Chinese summary of the background and why it matters, and 
+a link to the original article if you want to read more. The point is 
+to let you get the gist fast without having to push through a full page 
+of English text.
+
+### Culture Decode
+
+This is the part I'm more excited about. Every day the app surfaces a 
+few things that are currently being talked about in American culture — 
+a sports moment, a pop culture event, a meme, a campus story — and for 
+each one it gives you:
+
+- **The background**, in Chinese. What happened, who's involved, why 
+  people care. Enough context to actually understand the reference.
+- **Relevant knowledge**, also in Chinese. If it's about March Madness, 
+  this is where you'd get the basics of how the tournament works, which 
+  teams are good this year, what "bracket" means. You can go as deep as 
+  you want — short overview if you just need to follow a conversation, 
+  more detail if you're actually interested.
+- **A few English phrases** native speakers would use when talking 
+  about it. Not textbook English — the actual casual expressions you'd 
+  hear in a dorm.
+
+Some topics will take 1 minute to read. Some will take 10. It depends 
+on the topic and how deep you want to go. The app doesn't pretend 
+everything fits in a 30-second card.
+
+Content is pulled from Reddit (r/OutOfTheLoop, r/popculturechat, 
+r/UIUC) and Google Trends, then processed by Claude to generate the 
+Chinese explanations and English phrases.
+
+---
+
+## Tech Stack (MVP)
+
+- **Data pipeline:** Python (feedparser, PRAW, pytrends)
+- **LLM:** Anthropic Claude API
+- **Frontend:** HTML, CSS, vanilla JavaScript
 - **Hosting:** Vercel
-- **Version Control:** Git + GitHub
-- **Planned:** NewsData.io API, Claude/Gemini API, React Native
+- **Update method:** A Python script I run manually each morning. It 
+  pulls the latest content, generates the cards, and commits the 
+  updated JSON to GitHub. Vercel redeploys automatically.
+
+This is deliberately a simple setup. Full automation (GitHub Actions, 
+a real database) is something I'll add later if the project actually 
+gets used.
 
 ---
 
-## 🗺 Roadmap
+## Roadmap
 
 | Phase | Goal | Status |
 |---|---|---|
-| 1 | Static prototype + deploy | ✅ Done |
-| 2 | Real news API integration | 🚧 In progress |
-| 3 | AI-generated Chinese content | ⏳ Planned |
-| 4 | Knowledge category system + mastery tracking | ⏳ Planned |
-| 5 | User accounts & data persistence | ⏳ Planned |
-| 6 | Mobile app (React Native) | ⏳ Planned |
-| 7 | App Store launch | 🎯 Goal |
+| 1 | MVP with manual daily updates | In progress |
+| 2 | Use it myself for a few weeks, improve content quality | Planned |
+| 3 | Automate updates with GitHub Actions | Planned |
+| 4 | Add user preferences / interest tags | Planned |
+| 5 | Mobile app | Maybe |
 
 ---
 
-## 🧠 About the Development Process
+## About the Development Process
 
-This project is being built using an **AI-assisted development workflow** (sometimes called "vibe coding") — I describe what I want in natural language, AI helps generate the code, and I'm responsible for product decisions, user experience, debugging, and iteration direction.
-
-This isn't a shortcut — it's a different kind of craft. Every design decision, every feature priority, every user-facing detail comes from me. AI is the tool, like Figma is to a designer or a compiler is to an engineer. The full development history is recorded in the commit log.
-
----
-
-## 👋 About Me
-
-I'm a student at UIUC, building this as my first complete independent project. The goal: ship something real, learn the full stack of modern indie development, and (hopefully) build something other people actually want to use.
-
-If you have feedback, ideas, or just want to say hi — feel free to open an issue or reach out.
+I'm using AI tools (Claude Code mostly) to help write the code. I'm not 
+a trained software engineer — my background is in data science, so I 
+can write Python for analysis but I haven't built a full web app 
+before. AI helps fill in the gaps. I still make all the product 
+decisions, figure out what to build next, and debug things when they 
+break. The commit history shows how the project actually got built.
 
 ---
 
-*Last updated: April 2026*
+## About Me
+
+I'm a student at UIUC. This is my first full independent project. 
+I'm mainly building it because I want to use it — I'm the target user, 
+and the first test for any feature is whether I'd actually open the app 
+to use it.
+
+If you have feedback or ideas, feel free to open an issue.
