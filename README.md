@@ -4,7 +4,7 @@ A daily briefing app for international students in the U.S. — helps you
 keep up with the news and understand the cultural references people 
 around you casually drop into conversation.
 
-**Live Demo:** *(coming soon)*
+**Live Demo:** [shiny-choux-ebf0e1.netlify.app](https://shiny-choux-ebf0e1.netlify.app)
 
 ---
 
@@ -42,56 +42,35 @@ here.
 
 The app has two sections.
 
-### News Brief
+### News Brief ✅
 
-A short daily feed of important stories from around the world, pulled 
-from neutral wire services (AP, Reuters). Each item has an English 
-headline, a Chinese summary of the background and why it matters, and 
-a link to the original article if you want to read more. The point is 
-to let you get the gist fast without having to push through a full page 
-of English text.
+A live feed of important stories pulled from NewsData.io. Each item has 
+an English headline and a Claude-generated Chinese summary explaining 
+the background and why it matters. The point is to let you get the gist 
+fast without having to push through a full page of English text.
 
-### Culture Decode
+### Culture Decode (coming soon)
 
-This is the part I'm more excited about. Every day the app surfaces a 
-few things that are currently being talked about in American culture — 
-a sports moment, a pop culture event, a meme, a campus story — and for 
-each one it gives you:
+Every day the app will surface a few things currently being talked about 
+in American culture — a sports moment, a pop culture event, a meme, a 
+campus story — and for each one give you:
 
-- **The background**, in Chinese. What happened, who's involved, why 
-  people care. Enough context to actually understand the reference.
-- **Relevant knowledge**, also in Chinese. If it's about March Madness, 
-  this is where you'd get the basics of how the tournament works, which 
-  teams are good this year, what "bracket" means. You can go as deep as 
-  you want — short overview if you just need to follow a conversation, 
-  more detail if you're actually interested.
-- **A few English phrases** native speakers would use when talking 
-  about it. Not textbook English — the actual casual expressions you'd 
-  hear in a dorm.
+- **The background**, in Chinese.
+- **Relevant knowledge**, also in Chinese.
+- **A few English phrases** native speakers would actually use.
 
-Some topics will take 1 minute to read. Some will take 10. It depends 
-on the topic and how deep you want to go. The app doesn't pretend 
-everything fits in a 30-second card.
-
-Content is pulled from Reddit (r/OutOfTheLoop, r/popculturechat, 
-r/UIUC) and Google Trends, then processed by Claude to generate the 
-Chinese explanations and English phrases.
+Content will be pulled from Reddit (r/OutOfTheLoop, r/popculturechat, 
+r/UIUC) and Google Trends, then processed by Claude.
 
 ---
 
-## Tech Stack (MVP)
+## Tech Stack
 
-- **Data pipeline:** Python (feedparser, PRAW, pytrends)
-- **LLM:** Anthropic Claude API
+- **News API:** NewsData.io
+- **LLM:** Anthropic Claude API (claude-haiku, for Chinese summaries)
 - **Frontend:** HTML, CSS, vanilla JavaScript
-- **Hosting:** Vercel
-- **Update method:** A Python script I run manually each morning. It 
-  pulls the latest content, generates the cards, and commits the 
-  updated JSON to GitHub. Vercel redeploys automatically.
-
-This is deliberately a simple setup. Full automation (GitHub Actions, 
-a real database) is something I'll add later if the project actually 
-gets used.
+- **Backend:** Netlify serverless functions (API proxy + Claude calls)
+- **Hosting:** Netlify
 
 ---
 
@@ -99,17 +78,18 @@ gets used.
 
 | Phase | Goal | Status |
 |---|---|---|
-| 1 | MVP with manual daily updates | In progress |
-| 2 | Use it myself for a few weeks, improve content quality | Planned |
-| 3 | Automate updates with GitHub Actions | Planned |
-| 4 | Add user preferences / interest tags | Planned |
-| 5 | Mobile app | Maybe |
+| 1 | Live news feed with Chinese summaries | ✅ Done |
+| 2 | Culture Decode section | In progress |
+| 3 | Content quality filtering (relevant to students) | Planned |
+| 4 | Automate daily updates | Planned |
+| 5 | User preferences / interest tags | Planned |
+| 6 | Mobile app | Maybe |
 
 ---
 
 ## About the Development Process
 
-I'm using AI tools (Claude Code mostly) to help write the code. I'm not 
+I'm using AI tools (Claude mostly) to help write the code. I'm not 
 a trained software engineer — my background is in data science, so I 
 can write Python for analysis but I haven't built a full web app 
 before. AI helps fill in the gaps. I still make all the product 
@@ -120,9 +100,9 @@ break. The commit history shows how the project actually got built.
 
 ## About Me
 
-I'm a student at UIUC. This is my first full independent project. 
-I'm mainly building it because I want to use it — I'm the target user, 
-and the first test for any feature is whether I'd actually open the app 
-to use it.
+I'm a first-year student at UIUC. This is my first full independent 
+project. I'm mainly building it because I want to use it — I'm the 
+target user, and the first test for any feature is whether I'd actually 
+open the app to use it.
 
 If you have feedback or ideas, feel free to open an issue.
