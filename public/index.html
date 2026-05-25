@@ -248,6 +248,17 @@
     overflow: hidden;
   }
 
+  .chinese-summary {
+  font-size: 0.88rem;
+  color: #3a3530;
+  line-height: 1.6;
+  font-weight: 400;
+  padding: 0.5rem 0.75rem;
+  border-left: 3px solid var(--accent);
+  background: rgba(200, 55, 45, 0.05);
+  margin: 0.25rem 0;
+}
+
   .meta {
     font-size: 0.68rem;
     color: var(--muted);
@@ -428,11 +439,13 @@ function makeCard(a, size) {
   const date = formatDate(a.pubDate);
   const desc = a.description || '';
   const url = a.link || '#';
+  const zh = a.chinese_summary || '';
 
   if (size === 'hero') return `
     <a class="hero-card" href="${url}" target="_blank" rel="noopener">
       <span class="tag ${tagCls}">${tag}</span>
       <div class="headline">${a.title}</div>
+      ${zh ? `<div class="chinese-summary">${zh}</div>` : ''}
       ${desc ? `<div class="description">${desc}</div>` : ''}
       <div class="meta">${date}${a.source_id ? ' · ' + a.source_id : ''}</div>
     </a>`;
@@ -441,6 +454,7 @@ function makeCard(a, size) {
     <a class="side-card" href="${url}" target="_blank" rel="noopener">
       <span class="tag ${tagCls}">${tag}</span>
       <div class="headline">${a.title}</div>
+      ${zh ? `<div class="chinese-summary" style="font-size:0.8rem">${zh}</div>` : ''}
       <div class="meta">${date}</div>
     </a>`;
 
@@ -448,7 +462,7 @@ function makeCard(a, size) {
     <a class="grid-card" href="${url}" target="_blank" rel="noopener">
       <span class="tag ${tagCls}">${tag}</span>
       <div class="headline">${a.title}</div>
-      ${desc ? `<div class="description" style="-webkit-line-clamp:2">${desc}</div>` : ''}
+      ${zh ? `<div class="chinese-summary" style="font-size:0.8rem">${zh}</div>` : ''}
       <div class="meta">${date}</div>
     </a>`;
 }
