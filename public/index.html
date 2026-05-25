@@ -479,8 +479,8 @@ async function fetchNews(category) {
   const main = document.getElementById('main-content');
   main.innerHTML = `<div class="loading-state"><div class="loading-pulse"></div><div class="loading-text">Gathering today's stories...</div></div>`;
 
-  let url = `https://newsdata.io/api/1/news?apikey=${API_KEY}&language=en&size=15`;
-  if (category && category !== 'all') url += `&category=${category}`;
+let url = `/.netlify/functions/news?placeholder=1`;
+if (category && category !== 'all') url += `&category=${category}`;
 
   try {
     const res  = await fetch(url);
