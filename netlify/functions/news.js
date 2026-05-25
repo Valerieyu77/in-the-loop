@@ -1,6 +1,6 @@
 exports.handler = async function(event) {
   const category = event.queryStringParameters?.category;
-  let url = `https://newsdata.io/api/1/news?apikey=pub_00ffcd0d92754b768fa2a89fd3b172bd&language=en&size=15`;
+  let url = `https://newsdata.io/api/1/news?apikey=pub_00ffcd0d92754b768fa2a89fd3b172bd&language=en`;
   if (category && category !== 'all') url += `&category=${category}`;
 
   try {
