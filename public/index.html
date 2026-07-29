@@ -156,13 +156,12 @@
     grid-template-columns: 1.6fr 1fr;
     align-items: start;
     gap: 0;
-    border: 1px solid var(--border);
     margin-bottom: 2rem;
   }
 
   .hero-card {
     padding: 1.75rem;
-    border-right: 1px solid var(--border);
+    border: 1px solid var(--border);
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
@@ -192,6 +191,7 @@
     display: flex;
     flex-direction: column;
     background: var(--card-bg);
+    border: 1px solid var(--border);
   }
 
   .side-card {
@@ -390,7 +390,6 @@
     .masthead-meta { display: none; }
     .main { padding: 1rem; }
     .hero-grid { grid-template-columns: 1fr; }
-    .hero-card { border-right: none; border-bottom: 1px solid var(--border); }
     .grid-section { grid-template-columns: 1fr; }
     .grid-card { border-right: none; border-bottom: 1px solid var(--border); }
     .grid-card:last-child { border-bottom: none; }
@@ -477,16 +476,23 @@ function makeSummaryBlocks(a, fontSize) {
       ${whyItMatters ? `<div class="why-it-matters"><span class="summary-label muted">为什么重要</span>${whyItMatters}</div>` : ''}`;
 }
 
+function isCrimeArticle(a) {
+  const cats = Array.isArray(a.category) ? a.category : [a.category];
+  return cats.some(c => typeof c === 'string' && c.toLowerCase() === 'crime');
+}
+
 function makeCard(a, size) {
   const tag = getCatLabel(a.category);
   const tagCls = getTagClass(a.category);
   const date = formatDate(a.pubDate);
   const desc = a.description || '';
   const url = a.link || '#';
+  // Crime coverage often uses mugshots or crime-scene photos — never auto-render those.
+  const showImage = a.image_url && !isCrimeArticle(a);
 
   if (size === 'hero') return `
     <a class="hero-card" href="${url}" target="_blank" rel="noopener">
-      ${a.image_url ? `<div class="hero-image-wrap"><img class="hero-image" src="${a.image_url}" alt="" loading="lazy" onerror="this.parentElement.remove()"></div>` : ''}
+      ${showImage ? `<div class="hero-image-wrap"><img class="hero-image" src="${a.image_url}" alt="" loading="lazy" onerror="this.parentElement.remove()"></div>` : ''}
       <span class="tag ${tagCls}">${tag}</span>
       <div class="headline">${a.title}</div>
       ${makeSummaryBlocks(a)}
@@ -518,11 +524,22 @@ function renderArticles(articles) {
     return;
   }
 
-  // The backend already sorts by relevance descending (newest pubDate breaks ties),
-  // so the top 4 are always the highest-relevance articles, regardless of score.
-  const hero  = articles[0];
-  const sides = articles.slice(1, 4);
-  const grid  = articles.slice(4);
+  // The backend already sorts by relevance descending (newest pubDate breaks ties).
+  // Crime articles are excluded from Top Stories — mugshots/crime-scene photos
+  // aren't appropriate for the hero slot — but still show up in More Headlines.
+  const topEligible  = articles.filter(a => !isCrimeArticle(a));
+  const headlineOnly = articles.filter(isCrimeArticle);
+
+  const hero  = topEligible[0];
+  const sides = topEligible.slice(1, 4);
+  const grid  = topEligible.slice(4).concat(headlineOnly);
+
+  if (!hero) {
+    main.innerHTML = `
+      <div class="section-rule"><span>More Headlines</span></div>
+      <div class="grid-section">${articles.map(a => makeCard(a, 'grid')).join('')}</div>`;
+    return;
+  }
 
   main.innerHTML = `
     <div class="section-rule"><span>Top Stories</span></div>
