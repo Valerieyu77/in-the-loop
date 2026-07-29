@@ -11,9 +11,12 @@ exports.handler = async function(event) {
       return { statusCode: 500, body: JSON.stringify(newsData) };
     }
 
-    const articles = dedupeArticles(newsData.results).slice(0, 9);
+    // 2. Dedupe + quality filter, before we spend money calling Claude
+    const articles = dedupeArticles(newsData.results)
+      .filter(isQualityArticle)
+      .slice(0, 9);
 
-    // 2. 用 Claude 给每条新闻生成结构化中文解读
+    // 3. Ask Claude to generate a structured Chinese explanation for each article
     const summaryPromises = articles.map(async (article) => {
       try {
         const claudeRes = await fetch('https://api.anthropic.com/v1/messages', {
@@ -54,12 +57,18 @@ exports.handler = async function(event) {
 
     const enrichedArticles = await Promise.all(summaryPromises);
 
-    // 3. 解读和原始描述都没有的文章直接丢弃，不能出现空卡片
-    newsData.results = enrichedArticles.filter(a => a.headline_explained || a.why_it_matters);
+    // 4. Drop any article with neither an explanation nor a description — never render an
+    //    empty card. Sort what's left by relevance descending, newest pubDate breaks ties.
+    newsData.results = enrichedArticles
+      .filter(a => a.headline_explained || a.why_it_matters)
+      .sort(byRelevanceThenRecency);
 
     return {
       statusCode: 200,
-      headers: { 'Access-Control-Allow-Origin': '*' },
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=600'
+      },
       body: JSON.stringify(newsData)
     };
 
@@ -71,17 +80,19 @@ exports.handler = async function(event) {
   }
 };
 
-// Claude 调用失败或返回内容解析失败时，退回展示文章原始的英文 description。
-// 连 description 也没有的话，headline_explained/why_it_matters 都留空，
-// 上面的 filter 会把这篇文章整个丢弃，避免渲染出空卡片。
+// When the Claude call fails or the response can't be parsed, fall back to the
+// article's original English description. If there's no description either,
+// headline_explained/why_it_matters both stay empty and the filter above drops
+// the article entirely, so we never render an empty card.
 function applyFallbackSummary(article) {
   article.headline_explained = article.description || '';
   article.why_it_matters = '';
   article.relevance = null;
 }
 
-// Claude 有时会在 JSON 前后加多余文字，或用 ```json 代码块包裹。
-// 直接取第一个 { 到最后一个 } 之间的内容再 parse，两种情况都能容错。
+// Claude sometimes wraps the JSON in a ```json code block or adds stray text
+// before/after it. Grabbing everything from the first { to the last } and
+// parsing that handles both cases.
 function parseClaudeJson(text) {
   if (!text) return null;
   const start = text.indexOf('{');
@@ -99,15 +110,42 @@ function normalizeTitle(title) {
   return (title || '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
 }
 
-// 按 URL 去重；URL 缺失时按标题归一化后去重。
+// Normalized title and URL are both dedup criteria — matching either one counts
+// as a duplicate (not a fallback from one to the other). This catches the same
+// story reprinted on multiple sites with different links but the same title.
 function dedupeArticles(articles) {
-  const seen = new Set();
+  const seenTitles = new Set();
+  const seenLinks = new Set();
   const result = [];
   for (const a of articles) {
-    const key = a.link ? `link:${a.link}` : `title:${normalizeTitle(a.title)}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
+    const titleKey = normalizeTitle(a.title);
+    const linkKey = a.link || '';
+    const isDup = (titleKey && seenTitles.has(titleKey)) || (linkKey && seenLinks.has(linkKey));
+    if (isDup) continue;
+    if (titleKey) seenTitles.add(titleKey);
+    if (linkKey) seenLinks.add(linkKey);
     result.push(a);
   }
   return result;
+}
+
+// Filter out articles with a too-short title, no substantial description, or a
+// TV-listing/schedule-style title — these aren't worth paying to have Claude explain.
+function isQualityArticle(article) {
+  const title = (article.title || '').trim();
+  const description = (article.description || '').trim();
+  const wordCount = title.split(/\s+/).filter(Boolean).length;
+  if (wordCount < 5) return false;
+  if (description.length < 60) return false;
+  if (/\bon tv\b/i.test(title) || /\btv\s+(schedule|listings?)\b/i.test(title)) return false;
+  return true;
+}
+
+function byRelevanceThenRecency(a, b) {
+  const relA = Number.isInteger(a.relevance) ? a.relevance : 0;
+  const relB = Number.isInteger(b.relevance) ? b.relevance : 0;
+  if (relB !== relA) return relB - relA;
+  const timeA = Date.parse(a.pubDate) || 0;
+  const timeB = Date.parse(b.pubDate) || 0;
+  return timeB - timeA;
 }
