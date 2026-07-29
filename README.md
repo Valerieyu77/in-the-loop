@@ -1,6 +1,6 @@
 # In the Loop
 
-A daily briefing app for international students in the U.S. — helps you 
+A daily briefing app for Chinese international students in the U.S. — helps you 
 keep up with the news and understand the cultural references people 
 around you casually drop into conversation.
 
