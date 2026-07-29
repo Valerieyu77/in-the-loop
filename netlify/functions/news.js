@@ -79,9 +79,10 @@ exports.handler = async function(event) {
 
     // 4. Drop any article with neither an explanation nor a description — never render an
     //    empty card. Sort what's left by relevance descending, newest pubDate breaks ties.
-    newsData.results = enrichedArticles
+    const finalArticles = enrichedArticles
       .filter(a => a.headline_explained || a.why_it_matters)
-      .sort(byRelevanceThenRecency);
+      .sort(byRelevanceThenRecency)
+      .map(normalizeArticle);
 
     return {
       statusCode: 200,
@@ -89,7 +90,7 @@ exports.handler = async function(event) {
         'Access-Control-Allow-Origin': '*',
         'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=600'
       },
-      body: JSON.stringify(newsData)
+      body: JSON.stringify({ status: 'success', results: finalArticles })
     };
 
   } catch (e) {
@@ -159,6 +160,25 @@ function isQualityArticle(article) {
   if (description.length < 60) return false;
   if (/\bon tv\b/i.test(title) || /\btv\s+(schedule|listings?)\b/i.test(title)) return false;
   return true;
+}
+
+// The raw NewsData response carries dozens of fields we don't use, some of them
+// literal "ONLY AVAILABLE IN PAID PLANS" placeholder strings. Only pass through
+// what the frontend actually reads, so the upstream shape never leaks into our API.
+function normalizeArticle(article) {
+  return {
+    article_id: article.article_id ?? null,
+    title: article.title ?? '',
+    link: article.link ?? '',
+    description: article.description ?? '',
+    image_url: article.image_url ?? null,
+    pubDate: article.pubDate ?? null,
+    category: article.category ?? null,
+    source_name: article.source_name ?? null,
+    headline_explained: article.headline_explained ?? '',
+    why_it_matters: article.why_it_matters ?? '',
+    relevance: Number.isInteger(article.relevance) ? article.relevance : null
+  };
 }
 
 function byRelevanceThenRecency(a, b) {

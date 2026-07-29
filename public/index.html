@@ -496,7 +496,7 @@ function makeCard(a, size) {
       <div class="headline">${a.title}</div>
       ${makeSummaryBlocks(a)}
       ${desc ? `<div class="description">${desc}</div>` : ''}
-      <div class="meta">${date}${a.source_id ? ' · ' + a.source_id : ''}</div>
+      <div class="meta">${date}${a.source_name ? ' · ' + a.source_name : ''}</div>
     </a>`;
 
   if (size === 'side') return `
