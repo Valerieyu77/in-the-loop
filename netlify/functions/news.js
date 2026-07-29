@@ -11,9 +11,12 @@ exports.handler = async function(event) {
       return { statusCode: 500, body: JSON.stringify(newsData) };
     }
 
-    const articles = dedupeArticles(newsData.results).slice(0, 9);
+    // 2. 去重 + 质量过滤，在花钱调用 Claude 之前把不值得解读的文章去掉
+    const articles = dedupeArticles(newsData.results)
+      .filter(isQualityArticle)
+      .slice(0, 9);
 
-    // 2. 用 Claude 给每条新闻生成结构化中文解读
+    // 3. 用 Claude 给每条新闻生成结构化中文解读
     const summaryPromises = articles.map(async (article) => {
       try {
         const claudeRes = await fetch('https://api.anthropic.com/v1/messages', {
@@ -54,12 +57,18 @@ exports.handler = async function(event) {
 
     const enrichedArticles = await Promise.all(summaryPromises);
 
-    // 3. 解读和原始描述都没有的文章直接丢弃，不能出现空卡片
-    newsData.results = enrichedArticles.filter(a => a.headline_explained || a.why_it_matters);
+    // 4. 解读和原始描述都没有的文章直接丢弃，不能出现空卡片；剩下的按 relevance 降序排，
+    //    同分按发布时间新的在前
+    newsData.results = enrichedArticles
+      .filter(a => a.headline_explained || a.why_it_matters)
+      .sort(byRelevanceThenRecency);
 
     return {
       statusCode: 200,
-      headers: { 'Access-Control-Allow-Origin': '*' },
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=600'
+      },
       body: JSON.stringify(newsData)
     };
 
@@ -99,15 +108,40 @@ function normalizeTitle(title) {
   return (title || '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
 }
 
-// 按 URL 去重；URL 缺失时按标题归一化后去重。
+// 归一化标题和 URL 都是去重判据，命中任意一个就算重复（不是先后 fallback 关系）。
+// 这样同一篇稿子被多个站点转载、链接不同但标题一样时也能去掉。
 function dedupeArticles(articles) {
-  const seen = new Set();
+  const seenTitles = new Set();
+  const seenLinks = new Set();
   const result = [];
   for (const a of articles) {
-    const key = a.link ? `link:${a.link}` : `title:${normalizeTitle(a.title)}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
+    const titleKey = normalizeTitle(a.title);
+    const linkKey = a.link || '';
+    const isDup = (titleKey && seenTitles.has(titleKey)) || (linkKey && seenLinks.has(linkKey));
+    if (isDup) continue;
+    if (titleKey) seenTitles.add(titleKey);
+    if (linkKey) seenLinks.add(linkKey);
     result.push(a);
   }
   return result;
+}
+
+// 过滤掉标题过短、没有实质描述、或像节目表/榜单的文章 —— 这些不值得花钱调 Claude。
+function isQualityArticle(article) {
+  const title = (article.title || '').trim();
+  const description = (article.description || '').trim();
+  const wordCount = title.split(/\s+/).filter(Boolean).length;
+  if (wordCount < 5) return false;
+  if (description.length < 100) return false;
+  if (/\bon tv\b/i.test(title) || /\btv\s+(schedule|listings?)\b/i.test(title)) return false;
+  return true;
+}
+
+function byRelevanceThenRecency(a, b) {
+  const relA = Number.isInteger(a.relevance) ? a.relevance : 0;
+  const relB = Number.isInteger(b.relevance) ? b.relevance : 0;
+  if (relB !== relA) return relB - relA;
+  const timeA = Date.parse(a.pubDate) || 0;
+  const timeB = Date.parse(b.pubDate) || 0;
+  return timeB - timeA;
 }
