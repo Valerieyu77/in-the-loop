@@ -259,6 +259,16 @@
   margin: 0.25rem 0;
 }
 
+  .summary-label {
+    display: block;
+    font-size: 0.62rem;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 0.15rem;
+  }
+
   .meta {
     font-size: 0.68rem;
     color: var(--muted);
@@ -432,19 +442,27 @@ function getCatLabel(cat) {
   return Array.isArray(cat) ? cat[0] : cat;
 }
 
+function makeSummaryBlocks(a, fontSize) {
+  const style = fontSize ? ` style="font-size:${fontSize}"` : '';
+  const headlineExplained = (a.headline_explained || '').trim();
+  const whyItMatters = (a.why_it_matters || '').trim();
+  return `
+      ${headlineExplained ? `<div class="chinese-summary"${style}><span class="summary-label">是什么</span>${headlineExplained}</div>` : ''}
+      ${whyItMatters ? `<div class="chinese-summary"${style}><span class="summary-label">为什么重要</span>${whyItMatters}</div>` : ''}`;
+}
+
 function makeCard(a, size) {
   const tag = getCatLabel(a.category);
   const tagCls = getTagClass(a.category);
   const date = formatDate(a.pubDate);
   const desc = a.description || '';
   const url = a.link || '#';
-  const zh = a.chinese_summary || '';
 
   if (size === 'hero') return `
     <a class="hero-card" href="${url}" target="_blank" rel="noopener">
       <span class="tag ${tagCls}">${tag}</span>
       <div class="headline">${a.title}</div>
-      ${zh ? `<div class="chinese-summary">${zh}</div>` : ''}
+      ${makeSummaryBlocks(a)}
       ${desc ? `<div class="description">${desc}</div>` : ''}
       <div class="meta">${date}${a.source_id ? ' · ' + a.source_id : ''}</div>
     </a>`;
@@ -453,7 +471,7 @@ function makeCard(a, size) {
     <a class="side-card" href="${url}" target="_blank" rel="noopener">
       <span class="tag ${tagCls}">${tag}</span>
       <div class="headline">${a.title}</div>
-      ${zh ? `<div class="chinese-summary" style="font-size:0.8rem">${zh}</div>` : ''}
+      ${makeSummaryBlocks(a, '0.8rem')}
       <div class="meta">${date}</div>
     </a>`;
 
@@ -461,7 +479,7 @@ function makeCard(a, size) {
     <a class="grid-card" href="${url}" target="_blank" rel="noopener">
       <span class="tag ${tagCls}">${tag}</span>
       <div class="headline">${a.title}</div>
-      ${zh ? `<div class="chinese-summary" style="font-size:0.8rem">${zh}</div>` : ''}
+      ${makeSummaryBlocks(a, '0.8rem')}
       <div class="meta">${date}</div>
     </a>`;
 }
