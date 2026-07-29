@@ -1,20 +1,40 @@
+const MAX_NEWS_PAGES = 3;
+const MAX_CLAUDE_CALLS = 13;
+
 exports.handler = async function(event) {
   const category = event.queryStringParameters?.category;
   let url = `https://newsdata.io/api/1/news?apikey=${process.env.NEWSDATA_API_KEY}&language=en`;
   if (category && category !== 'all') url += `&category=${category}`;
 
   try {
-    // 1. 拉新闻
+    // 1. Fetch news — the free NewsData tier only returns ~10 articles per page, so we
+    //    follow the nextPage token for a few more pages to build a bigger candidate pool.
     const newsRes = await fetch(url);
     const newsData = await newsRes.json();
     if (newsData.status !== 'success') {
       return { statusCode: 500, body: JSON.stringify(newsData) };
     }
 
-    // 2. Dedupe + quality filter, before we spend money calling Claude
-    const articles = dedupeArticles(newsData.results)
+    let allResults = Array.isArray(newsData.results) ? newsData.results.slice() : [];
+    let nextPageToken = newsData.nextPage;
+
+    for (let page = 2; page <= MAX_NEWS_PAGES && nextPageToken; page++) {
+      try {
+        const pageRes = await fetch(`${url}&page=${nextPageToken}`);
+        const pageData = await pageRes.json();
+        if (pageData.status !== 'success' || !Array.isArray(pageData.results)) break;
+        allResults = allResults.concat(pageData.results);
+        nextPageToken = pageData.nextPage;
+      } catch (e) {
+        break; // a later page failing shouldn't fail the whole request — use what we have
+      }
+    }
+
+    // 2. Dedupe + quality filter, before we spend money calling Claude. Capped at
+    //    MAX_CLAUDE_CALLS so the Claude bill stays bounded regardless of pool size.
+    const articles = dedupeArticles(allResults)
       .filter(isQualityArticle)
-      .slice(0, 9);
+      .slice(0, MAX_CLAUDE_CALLS);
 
     // 3. Ask Claude to generate a structured Chinese explanation for each article
     const summaryPromises = articles.map(async (article) => {
