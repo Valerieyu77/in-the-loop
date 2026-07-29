@@ -510,10 +510,6 @@ function makeCard(a, size) {
     </a>`;
 }
 
-function isTopStoryEligible(a) {
-  return Number.isInteger(a.relevance) && a.relevance > 2;
-}
-
 function renderArticles(articles) {
   const main = document.getElementById('main-content');
   if (!articles.length) {
@@ -521,21 +517,11 @@ function renderArticles(articles) {
     return;
   }
 
-  // 后端已经按 relevance 降序（同分按发布时间新的在前）排好了；
-  // 这里只按 relevance 阈值分桶，不再用 articles[0] 硬取头条。
-  const topEligible  = articles.filter(isTopStoryEligible);
-  const headlineOnly = articles.filter(a => !isTopStoryEligible(a));
-
-  const hero  = topEligible[0];
-  const sides = topEligible.slice(1, 4);
-  const grid  = topEligible.slice(4).concat(headlineOnly);
-
-  if (!hero) {
-    main.innerHTML = `
-      <div class="section-rule"><span>More Headlines</span></div>
-      <div class="grid-section">${articles.map(a => makeCard(a, 'grid')).join('')}</div>`;
-    return;
-  }
+  // The backend already sorts by relevance descending (newest pubDate breaks ties),
+  // so the top 4 are always the highest-relevance articles, regardless of score.
+  const hero  = articles[0];
+  const sides = articles.slice(1, 4);
+  const grid  = articles.slice(4);
 
   main.innerHTML = `
     <div class="section-rule"><span>Top Stories</span></div>
